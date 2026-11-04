@@ -1,20 +1,21 @@
-"""Parsing tests on a saved page: fast, no network. Add a saved page for every layout your site has."""
-from pathlib import Path
+from parse import date, doc_item, pages, rows
 
-import crawl
-
-PAGES = Path(__file__).parent / "pages"
+ANSWER = [{"listOfQuestions": [{"quesNo": 280, "subjects": "Roads in Delhi", "lokNo": "18", "member": ["Shri A"], "ministry": "ROAD TRANSPORT AND HIGHWAYS", "type": "STARRED", "date": "09.08.2024", "questionsFilePath": "https://sansad.in/getFile/x.pdf?source=lsapps", "sessionNo": "2"}], "totalRecordSize": 3499}]
 
 
-def test_catalogue_page_gives_twenty_books():
-    rows = crawl.parse((PAGES / "catalogue-page-1.html").read_text(encoding="utf-8"))
-    assert len(rows) == 20
-    rid, book = rows[0]
-    assert rid == "a-light-in-the-attic_1000"                       # the site's own id: stable across runs
-    assert book["title"] == "A Light in the Attic" and book["price"] == "£51.77" and book["availability"] == "In stock"
-    assert book["url"].startswith("https://books.toscrape.com/catalogue/")
-    assert len({r for r, _ in rows}) == 20                          # no duplicate ids on a page
+def test_rows():
+    total, got = rows(ANSWER)
+    assert total == 3499 and got[0][0] == "ls18-s2-S280-09.08.2024"
+    assert got[0][1]["date"] == "2024-08-09" and got[0][1]["members"] == ["Shri A"]
 
 
-def test_an_empty_page_gives_nothing():
-    assert crawl.parse("<html><body>No products</body></html>") == []
+def test_empty():
+    assert rows([{"listOfQuestions": [], "totalRecordSize": 0}]) == (0, [])
+
+
+def test_pages():
+    assert pages(3499) == 35 and pages(100) == 1 and date("x") == ""
+
+
+def test_doc_item():
+    assert doc_item("a", {"pdf": "u", "lok_sabha": "18", "session": "2"})["payload"]["question"] == "a"

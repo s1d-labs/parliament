@@ -1,27 +1,19 @@
-"""What this family scrapes. Change this file first.
+"""What this family scrapes: Lok Sabha questions and answers from sansad.in, every question of the 17th and 18th Lok Sabha.
 
-FAMILY must equal the repo name (s1d-labs/<FAMILY>) and the family the hub owner added on scrape.s1d.me/runners.
-Each project is one queue of work on one site; `target` is the host it hits (the hub caps workers per target).
+parliament-ls   -- one queue item per page of 100 questions. Page 1 of a session adds the pages after it and the answer files.
+parliament-docs -- one queue item per answer PDF (English).
 """
 import json
 from pathlib import Path
 
 FAMILY = json.loads((Path(__file__).parent / "scrape.json").read_text())["family"]
+HOST = "sansad.in"
+# Lok Sabha number -> sessions the site lists. A session with no questions gives an empty page, which is harmless.
+SESSIONS = {17: range(1, 16), 18: range(1, 12)}
 
 PROJECTS = [
-    {
-        "name": f"{FAMILY}-books",              # project names: 2-64 chars of a-z 0-9 - _, start them with the family name
-        "title": "Books to Scrape catalogue",
-        "task": "crawl",                         # a task from scrape.json
-        "target": "books.toscrape.com",
-        "env": {"SITE": "https://books.toscrape.com"},
-        "probe": f"{FAMILY}:books.toscrape.com",
-        "unit_label": "page", "record_label": "book",
-        # the queue: one item per catalogue page; `expected` (records per item) gives progress and ETAs on the dashboard
-        "items": [{"key": f"page-{n}", "payload": {"url": f"https://books.toscrape.com/catalogue/page-{n}.html", "expected": 20}}
-                  for n in range(1, 51)],
-    },
+    {"name": f"{FAMILY}-ls", "title": "Lok Sabha questions", "task": "questions", "unit_label": "page", "record_label": "question",
+     "items": [{"key": f"ls{ls}-s{s}-p1", "payload": {"ls": ls, "session": s, "page": 1}} for ls, ss in SESSIONS.items() for s in ss]},
+    {"name": f"{FAMILY}-docs", "title": "Lok Sabha answer PDFs", "task": "docs", "unit_label": "file", "record_label": "answer PDF", "items": []},
 ]
-
-# health checks the hub runs every minute; work for a project holds while its probe fails
-PROBES = [{"name": f"{FAMILY}:books.toscrape.com", "url": "https://books.toscrape.com/", "expect": "All products"}]
+PROBES = [{"name": f"{FAMILY}:{HOST}", "url": f"https://{HOST}/api_ls/question/qetFilteredQuestionsAns?loksabhaNo=18&sessionNumber=2&pageNo=1&locale=en&pageSize=1", "expect": "listOfQuestions"}]
