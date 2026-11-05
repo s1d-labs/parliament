@@ -35,3 +35,19 @@ def pages(total):
 
 def doc_item(rid, rec):
     return {"key": hashlib.sha1(rec["pdf"].encode()).hexdigest()[:24], "payload": {"url": rec["pdf"], "question": rid, "ls": rec["lok_sabha"], "session": rec["session"]}}
+
+
+def rs_url(session):
+    return f"https://rsdoc.nic.in/Question/Search_Questions?whereclause=ses_no={int(session)}"
+
+
+def rs_rows(answer):
+    """-> [(record id, record)] for one Rajya Sabha session."""
+    out = []
+    for q in answer or []:
+        no = q.get("qno")
+        no = int(no) if isinstance(no, float) and no.is_integer() else no
+        rid = f"rs-s{q.get('ses_no')}-{(q.get('qtype') or '').strip()[:1]}{no}-{q.get('qslno')}"
+        out.append((rid, {"house": "Rajya Sabha", "session": q.get("ses_no"), "number": no, "type": (q.get("qtype") or "").strip(), "date": (q.get("adate") or "")[:10], "subject": q.get("qtitle"), "ministry": q.get("min_name"),
+                          "members": [q.get("name")] if q.get("name") else [], "question_text": q.get("qn_text"), "answer_text": q.get("ans_text"), "status": q.get("status"), "pdf": q.get("files") or "", "file_name": q.get("eng_file_name") or ""}))
+    return out

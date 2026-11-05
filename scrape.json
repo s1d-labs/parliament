@@ -1,6 +1,6 @@
 {
   "family": "parliament",
-  "about": "Lok Sabha questions and answers (17th and 18th Lok Sabha) from sansad.in, with the answer PDFs",
+  "about": "Lok Sabha and Rajya Sabha questions and answers, with Lok Sabha answer PDFs",
   "setup": [
     "pip install -r requirements.txt"
   ],
@@ -12,6 +12,10 @@
     "docs": [
       "python",
       "docs.py"
+    ],
+    "rajya": [
+      "python",
+      "rajya.py"
     ]
   }
 }
