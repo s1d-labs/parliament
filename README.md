@@ -10,7 +10,6 @@ A family of the s1d-labs scrape pool.
 
 - sansad.in answers from India, so the projects use `geo="IN"`: India pool servers only.
 - Pace: 4 workers, 1 request per second per worker.
-- The PDFs (`parliament-docs`) wait until the question pages finish, because they would otherwise take the workers on this host.
 - Gaps: the site's API gives questions from the 17th Lok Sabha (2019) onward.
 
 Setup: change `family.py`, then Actions -> setup. Tests: `python -m pytest tests`.
