@@ -6,6 +6,6 @@ from family import FAMILY, HOST, PROBES, PROJECTS
 print("health checks:", set_probes(FAMILY, PROBES))
 for p in PROJECTS:
     register_project(p["name"], title=p["title"], unit_label=p["unit_label"], record_label=p["record_label"])
-    set_pool(p["name"], FAMILY, p["task"], target=HOST, probe=PROBES[0]["name"], geo="IN", max_workers=2, threads=1, delay_ms=1000)
+    set_pool(p["name"], FAMILY, p["task"], target=HOST, probe=PROBES[0]["name"], geo="IN", max_workers=4, threads=1, delay_ms=1000)
     if p["items"]:
         print(p["name"], "queue:", seed_queue(p["name"], p["items"]))
