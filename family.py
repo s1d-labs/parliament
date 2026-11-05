@@ -18,6 +18,6 @@ PROJECTS = [
      "items": [{"key": f"ls{ls}-s{s}-p1", "payload": {"ls": ls, "session": s, "page": 1}} for ls, ss in SESSIONS.items() for s in ss]},
     {"name": f"{FAMILY}-rs", "title": "Rajya Sabha questions and answers", "task": "rajya", "host": RS_HOST, "unit_label": "session", "record_label": "question",
      "items": [{"key": f"rs-s{n}", "payload": {"session": n}} for n in RS_SESSIONS]},
-    {"name": f"{FAMILY}-docs", "title": "Lok Sabha answer PDFs", "task": "docs", "unit_label": "file", "record_label": "answer PDF", "items": []},
+    {"name": f"{FAMILY}-docs", "title": "Lok Sabha answer PDFs", "task": "docs", "hold": True, "unit_label": "file", "record_label": "answer PDF", "items": []},
 ]
 PROBES = [{"name": f"{FAMILY}:{RS_HOST}", "url": f"https://{RS_HOST}/question/GetAllministary", "expect": "MIN"}, {"name": f"{FAMILY}:{HOST}", "url": f"https://{HOST}/api_ls/question/qetFilteredQuestionsAns?loksabhaNo=18&sessionNumber=2&pageNo=1&locale=en&pageSize=1", "expect": "listOfQuestions"}]
