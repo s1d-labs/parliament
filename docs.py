@@ -1,32 +1,25 @@
 """One answer PDF: save the file and one record."""
 import hashlib
 import os
-import signal
 import sys
 import time
 
 import requests
-from scrape_hub_client import HubClient
+from scrape_hub_client import HubClient, stop_flag
 
 from common import HEADERS, get
 
 PROJECT = os.environ["SCRAPE_POOL_PROJECT"]
 DEADLINE = time.time() + float(os.environ.get("SCRAPE_MAX_HOURS", "1")) * 3600 - 120
-stop = False
-
-
-def on_signal(*_):
-    global stop
-    stop = True
+stop = stop_flag(install=False)     # set on SIGINT / SIGTERM once main() installs the handlers
 
 
 def main():
     hub = HubClient(PROJECT, job_index=int(os.environ.get("SCRAPE_JOB_INDEX", 0)), total_jobs=int(os.environ.get("SCRAPE_TOTAL_JOBS", 1)))
-    signal.signal(signal.SIGINT, on_signal)
-    signal.signal(signal.SIGTERM, on_signal)
+    stop_flag()
     s = requests.Session()
     s.headers.update(HEADERS)
-    while time.time() < DEADLINE and not stop:
+    while time.time() < DEADLINE and not stop.is_set():
         if hub.settings.get("paused"):
             time.sleep(30)
             continue
@@ -44,7 +37,7 @@ def main():
         hub.record(it["key"], {"question": p["question"], "url": p["url"], "file": path, "bytes": len(r.content), "sha256": hashlib.sha256(r.content).hexdigest()})
         hub.complete([it["key"]], "done", fetched=1)
         time.sleep(max(.5, hub.settings.get("delay_ms", 0) / 1000))
-    hub.close("finished" if not stop else "failed", "" if not stop else "stopped by signal")
+    hub.close("finished" if not stop.is_set() else "failed", "" if not stop.is_set() else "stopped by signal")
 
 
 if __name__ == "__main__":

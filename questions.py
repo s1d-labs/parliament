@@ -1,11 +1,10 @@
 """One page of questions: store them, and on page 1 add the later pages. Each page adds its answer PDFs to parliament-docs."""
 import os
-import signal
 import sys
 import time
 
 import requests
-from scrape_hub_client import HubClient, seed_queue
+from scrape_hub_client import HubClient, seed_queue, stop_flag
 
 from common import HEADERS, get
 from parse import doc_item, pages, rows, url
@@ -13,21 +12,15 @@ from parse import doc_item, pages, rows, url
 PROJECT = os.environ["SCRAPE_POOL_PROJECT"]
 DOCS = "parliament-docs"
 DEADLINE = time.time() + float(os.environ.get("SCRAPE_MAX_HOURS", "1")) * 3600 - 120
-stop = False
-
-
-def on_signal(*_):
-    global stop
-    stop = True
+stop = stop_flag(install=False)     # set on SIGINT / SIGTERM once main() installs the handlers
 
 
 def main():
     hub = HubClient(PROJECT, job_index=int(os.environ.get("SCRAPE_JOB_INDEX", 0)), total_jobs=int(os.environ.get("SCRAPE_TOTAL_JOBS", 1)))
-    signal.signal(signal.SIGINT, on_signal)
-    signal.signal(signal.SIGTERM, on_signal)
+    stop_flag()
     s = requests.Session()
     s.headers.update(HEADERS)
-    while time.time() < DEADLINE and not stop:
+    while time.time() < DEADLINE and not stop.is_set():
         if hub.settings.get("paused"):
             time.sleep(30)
             continue
@@ -50,7 +43,7 @@ def main():
             seed_queue(DOCS, docs)
         hub.complete([it["key"]], "done", fetched=len(found))
         time.sleep(max(.5, hub.settings.get("delay_ms", 0) / 1000))
-    hub.close("finished" if not stop else "failed", "" if not stop else "stopped by signal")
+    hub.close("finished" if not stop.is_set() else "failed", "" if not stop.is_set() else "stopped by signal")
 
 
 if __name__ == "__main__":
